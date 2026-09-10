@@ -447,36 +447,18 @@
             bobotUAS: 30
         };
 
-        const INITIAL_MAPEL = [
-            { id: 'M1', kode: 'MTK-10', nama: 'Matematika', kelas: 'X-A', jam: 4, guru: 'Budi Santoso, S.Pd.' },
-            { id: 'M2', kode: 'BIN-10', nama: 'Bahasa Indonesia', kelas: 'X-A', jam: 3, guru: 'Budi Santoso, S.Pd.' },
-            { id: 'M3', kode: 'IPA-11', nama: 'Fisika Dasar', kelas: 'XI-IPA', jam: 4, guru: 'Budi Santoso, S.Pd.' }
-        ];
+        const INITIAL_MAPEL = [];
 
-        const INITIAL_SISWA = [
-            { id: 'S101', nisn: '0012345678', nama: 'Ahmad Rizky Pratama', kelas: 'X-A', ta: '2024/2025', jk: 'L', ortu: '081234567890' },
-            { id: 'S102', nisn: '0012345679', nama: 'Siti Aminah Putri', kelas: 'X-A', ta: '2024/2025', jk: 'P', ortu: '081234567891' },
-            { id: 'S103', nisn: '0012345680', nama: 'Budi Kurniawan', kelas: 'X-A', ta: '2024/2025', jk: 'L', ortu: '081234567892' },
-            { id: 'S104', nisn: '0012345681', nama: 'Dina Mariyana', kelas: 'X-A', ta: '2024/2025', jk: 'P', ortu: '081234567893' },
-            { id: 'S201', nisn: '0012345690', nama: 'Eko Rahardjo', kelas: 'XI-IPA', ta: '2024/2025', jk: 'L', ortu: '081234567894' }
-        ];
+        const INITIAL_SISWA = [];
 
-        const INITIAL_USERS = [
-            { id: 'U1', nama: 'Budi Santoso, S.Pd.', email: 'admin@sekolah.id', password: '123456', role: 'Admin Sistem', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' },
-            { id: 'U2', nama: 'Siti Aminah, M.Pd.', email: 'siti.aminah@guru.smp.belajar.id', password: '123456', role: 'Guru Mapel', lastLogin: '2026-07-30', status: 'Aktif' },
-            { id: 'U3', nama: 'Ahmad Rizky Pratama', email: 'ahmad.rizky@siswa.smp.belajar.id', password: '123456', role: 'Siswa', kelas: 'X-A', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' }
-        ];
+        const INITIAL_USERS = [];
 
         let db = {
             pengaturan: DEFAULT_SETTINGS,
             mapel: INITIAL_MAPEL,
             siswa: INITIAL_SISWA,
             users: INITIAL_USERS,
-            jadwal: [
-                { id: 'J1', hari: 'Senin', jamKe: '1-2', waktu: '07:30 - 09:00', kelas: 'X-A', mapel: 'Matematika', ruang: 'R. 101' },
-                { id: 'J2', hari: 'Selasa', jamKe: '3-4', waktu: '09:15 - 10:45', kelas: 'X-A', mapel: 'Bahasa Indonesia', ruang: 'R. 101' },
-                { id: 'J3', hari: 'Rabu', jamKe: '1-2', waktu: '07:30 - 09:00', kelas: 'XI-IPA', mapel: 'Fisika Dasar', ruang: 'Lab Fisika' }
-            ],
+            jadwal: [],
             absensi: [],
             nilai: [],
             jurnal: [],
@@ -501,10 +483,10 @@
         let tempSchoolLogo = null;
         let tempTeacherPhoto = null;
 
-        let activeTA = '2024/2025';
+        let activeTA = '';
         let activeMapelValue = '';
         let activeSiswaKelasFilter = '';
-        let activeSiswaTAFilter = '2024/2025';
+        let activeSiswaTAFilter = '';
         let activeRaporKelasFilter = '';
 
         function loadLocalFallback() {
