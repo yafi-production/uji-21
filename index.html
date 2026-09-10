@@ -447,18 +447,36 @@
             bobotUAS: 30
         };
 
-        const INITIAL_MAPEL = [];
+        const INITIAL_MAPEL = [
+            { id: 'M1', kode: 'MTK-10', nama: 'Matematika', kelas: 'X-A', jam: 4, guru: 'Budi Santoso, S.Pd.' },
+            { id: 'M2', kode: 'BIN-10', nama: 'Bahasa Indonesia', kelas: 'X-A', jam: 3, guru: 'Budi Santoso, S.Pd.' },
+            { id: 'M3', kode: 'IPA-11', nama: 'Fisika Dasar', kelas: 'XI-IPA', jam: 4, guru: 'Budi Santoso, S.Pd.' }
+        ];
 
-        const INITIAL_SISWA = [];
+        const INITIAL_SISWA = [
+            { id: 'S101', nisn: '0012345678', nama: 'Ahmad Rizky Pratama', kelas: 'X-A', ta: '2024/2025', jk: 'L', ortu: '081234567890' },
+            { id: 'S102', nisn: '0012345679', nama: 'Siti Aminah Putri', kelas: 'X-A', ta: '2024/2025', jk: 'P', ortu: '081234567891' },
+            { id: 'S103', nisn: '0012345680', nama: 'Budi Kurniawan', kelas: 'X-A', ta: '2024/2025', jk: 'L', ortu: '081234567892' },
+            { id: 'S104', nisn: '0012345681', nama: 'Dina Mariyana', kelas: 'X-A', ta: '2024/2025', jk: 'P', ortu: '081234567893' },
+            { id: 'S201', nisn: '0012345690', nama: 'Eko Rahardjo', kelas: 'XI-IPA', ta: '2024/2025', jk: 'L', ortu: '081234567894' }
+        ];
 
-        const INITIAL_USERS = [];
+        const INITIAL_USERS = [
+            { id: 'U1', nama: 'Budi Santoso, S.Pd.', email: 'admin@sekolah.id', password: '123456', role: 'Admin Sistem', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' },
+            { id: 'U2', nama: 'Siti Aminah, M.Pd.', email: 'siti.aminah@guru.smp.belajar.id', password: '123456', role: 'Guru Mapel', lastLogin: '2026-07-30', status: 'Aktif' },
+            { id: 'U3', nama: 'Ahmad Rizky Pratama', email: 'ahmad.rizky@siswa.smp.belajar.id', password: '123456', role: 'Siswa', kelas: 'X-A', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' }
+        ];
 
         let db = {
             pengaturan: DEFAULT_SETTINGS,
             mapel: INITIAL_MAPEL,
             siswa: INITIAL_SISWA,
             users: INITIAL_USERS,
-            jadwal: [],
+            jadwal: [
+                { id: 'J1', hari: 'Senin', jamKe: '1-2', waktu: '07:30 - 09:00', kelas: 'X-A', mapel: 'Matematika', ruang: 'R. 101' },
+                { id: 'J2', hari: 'Selasa', jamKe: '3-4', waktu: '09:15 - 10:45', kelas: 'X-A', mapel: 'Bahasa Indonesia', ruang: 'R. 101' },
+                { id: 'J3', hari: 'Rabu', jamKe: '1-2', waktu: '07:30 - 09:00', kelas: 'XI-IPA', mapel: 'Fisika Dasar', ruang: 'Lab Fisika' }
+            ],
             absensi: [],
             nilai: [],
             jurnal: [],
@@ -483,11 +501,12 @@
         let tempSchoolLogo = null;
         let tempTeacherPhoto = null;
 
-        let activeTA = '';
+        let activeTA = '2024/2025';
         let activeMapelValue = '';
         let activeSiswaKelasFilter = '';
-        let activeSiswaTAFilter = '';
+        let activeSiswaTAFilter = '2024/2025';
         let activeRaporKelasFilter = '';
+        let activeRaporTAFilter = '';
 
         function loadLocalFallback() {
             try {
@@ -989,6 +1008,10 @@
 
         function updateRaporKelasFilter(val) {
             activeRaporKelasFilter = val; renderModuleContent('rapor');
+        }
+
+        function updateRaporTAFilter(val) {
+            activeRaporTAFilter = val; renderModuleContent('rapor');
         }
 
         function validateFiltersSiswa() {
@@ -2159,11 +2182,10 @@
 
         // --- UPDATE JURNAL MENGAJAR ---
         function renderJurnalView(container, filter) {
-            const list = db.jurnal.filter(j => (!filter.mapel || j.mapel === filter.mapel) && (!filter.kelas || j.kelas === filter.kelas) && (!filter.ta || j.ta === filter.ta));
+            const list = db.jurnal;
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    ${getLocalFilterHTML()}
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">Jurnal Mengajar Harian Guru</h2>
                             <p class="text-xs text-slate-400">Daftar seluruh catatan materi KBM</p>
@@ -2293,11 +2315,10 @@
 
         function renderTugasView(container, filter) {
             const isSiswa = currentUser && currentUser.role === 'Siswa';
-            const list = db.tugas.filter(t => (!filter.mapel || t.mapel === filter.mapel) && (!filter.kelas || t.kelas === filter.kelas) && (!filter.ta || t.ta === filter.ta));
+            const list = db.tugas.filter(t => !isSiswa || t.kelas === currentUser.kelas);
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    ${getLocalFilterHTML()}
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">${isSiswa ? 'Daftar Tugas Siswa' : 'Pengelolaan Tugas Siswa'}</h2>
                             <p class="text-xs text-slate-400">Daftar penugasan aktif & tenggat waktu</p>
@@ -2863,21 +2884,29 @@
 
         function renderRaporView(container, filter) { 
             const uniqueClasses = [...new Set(db.siswa.map(s => s.kelas))].filter(Boolean).sort();
-            if (!activeRaporKelasFilter && uniqueClasses.length > 0) activeRaporKelasFilter = uniqueClasses[0];
-            const siswaKelas = db.siswa.filter(s => s.kelas === activeRaporKelasFilter && s.ta === activeTA);
+            const uniqueTAs = [...new Set(db.siswa.map(s => s.ta))].filter(Boolean).sort();
+            
+            const siswaKelas = db.siswa.filter(s => 
+                (!activeRaporKelasFilter || s.kelas === activeRaporKelasFilter) && 
+                (!activeRaporTAFilter || s.ta === activeRaporTAFilter)
+            );
             
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4">
-                        <div>
-                            <h2 class="font-bold text-lg text-slate-800">Rekapitulasi & Cetak Lembar Rapor Siswa</h2>
-                            <p class="text-xs text-slate-500 mt-1">Komposisi nilai akhir, absensi, dan catatan wali kelas</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-slate-600">Pilih Kelas:</span>
-                            <select onchange="updateRaporKelasFilter(this.value)" class="bg-slate-50 border border-slate-300 text-brand-700 text-xs font-bold rounded-lg px-3 py-1.5 outline-none cursor-pointer">
-                                ${uniqueClasses.length === 0 ? '<option value="">- Belum ada kelas -</option>' : uniqueClasses.map(c => `<option value="${c}" ${activeRaporKelasFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
-                            </select>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between gap-4 mt-4">
+                        <div class="flex-1">
+                            <h2 class="font-bold text-base text-slate-800">Rekapitulasi & Cetak Lembar Rapor Siswa</h2>
+                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                <span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-filter"></i> Filter:</span>
+                                <select onchange="updateRaporTAFilter(this.value)" class="bg-slate-50 border border-slate-300 text-brand-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm">
+                                    <option value="">-- Semua TA --</option>
+                                    ${uniqueTAs.map(ta => `<option value="${ta}" ${activeRaporTAFilter === ta ? 'selected' : ''}>${ta}</option>`).join('')}
+                                </select>
+                                <select onchange="updateRaporKelasFilter(this.value)" class="bg-slate-50 border border-slate-300 text-brand-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm">
+                                    <option value="">-- Semua Kelas --</option>
+                                    ${uniqueClasses.map(c => `<option value="${c}" ${activeRaporKelasFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -2895,14 +2924,16 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    ${siswaKelas.length === 0 ? `<tr><td colspan="6" class="p-8 text-center text-slate-400">Belum ada data siswa untuk kelas ini</td></tr>` : 
+                                    ${siswaKelas.length === 0 ? `<tr><td colspan="6" class="p-8 text-center text-slate-400">Belum ada data siswa untuk kelas atau TA ini</td></tr>` : 
                                     siswaKelas.map(s => {
+                                        const currentTA = activeRaporTAFilter || s.ta || activeTA;
+
                                         // 1. Kalkulasi Rata-Rata Nilai (Sinkronisasi Seluruh Guru Mapel)
                                         let totalNilai = 0, countMapel = 0;
                                         const mapelKelas = db.mapel.filter(m => m.kelas === s.kelas);
                                         
                                         mapelKelas.forEach(m => {
-                                            const rec = db.nilai.find(n => n.siswaId === s.id && n.ta === activeTA && n.mapel === m.nama);
+                                            const rec = db.nilai.find(n => n.siswaId === s.id && n.ta === currentTA && n.mapel === m.nama);
                                             if (rec) {
                                                 const avgTugas = rec.tugas && rec.tugas.length > 0 ? rec.tugas.reduce((a, b) => a + b, 0) / rec.tugas.length : 0;
                                                 const avgUh = rec.uh && rec.uh.length > 0 ? rec.uh.reduce((a, b) => a + b, 0) / rec.uh.length : 0;
@@ -2919,7 +2950,7 @@
                                         const rataRata = countMapel > 0 ? (totalNilai / countMapel).toFixed(1) : '-';
 
                                         // 2. Kalkulasi % Kehadiran (Agregasi Harian Seluruh Guru Mapel)
-                                        const absensiSiswa = db.absensi.filter(a => a.siswaId === s.id && a.ta === activeTA);
+                                        const absensiSiswa = db.absensi.filter(a => a.siswaId === s.id && a.ta === currentTA);
                                         let dailyStatus = {};
                                         absensiSiswa.forEach(a => {
                                             if(!dailyStatus[a.tanggal]) dailyStatus[a.tanggal] = a.status;
@@ -2934,7 +2965,7 @@
                                         let warnaHadir = persenKehadiran < 75 ? 'text-rose-600' : 'text-emerald-600';
 
                                         // 3. Ambil Catatan Wali Kelas
-                                        const catatanRec = db.raporCatatan.find(r => r.siswaId === s.id && r.ta === activeTA);
+                                        const catatanRec = db.raporCatatan.find(r => r.siswaId === s.id && r.ta === currentTA);
                                         const catatanTeks = catatanRec ? catatanRec.catatan : '';
 
                                         return `
@@ -2944,10 +2975,10 @@
                                             <td class="p-4 text-center font-bold text-slate-800 text-sm">${rataRata}</td>
                                             <td class="p-4 text-center font-bold ${warnaHadir} text-sm">${persenKehadiran}%</td>
                                             <td class="p-4">
-                                                <input type="text" value="${catatanTeks}" placeholder="Ketik catatan..." onchange="saveCatatanWaliKelas('${s.id}', '${activeTA}', this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition shadow-sm">
+                                                <input type="text" value="${catatanTeks}" placeholder="Ketik catatan..." onchange="saveCatatanWaliKelas('${s.id}', '${currentTA}', this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition shadow-sm">
                                             </td>
                                             <td class="p-4 text-right">
-                                                <button onclick="previewCetakRapor('${s.id}', '${activeTA}')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-end gap-2 ml-auto">
+                                                <button onclick="previewCetakRapor('${s.id}', '${currentTA}')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-end gap-2 ml-auto">
                                                     <i class="fa-solid fa-print"></i> Cetak Rapor
                                                 </button>
                                             </td>
