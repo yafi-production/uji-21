@@ -1071,10 +1071,10 @@
         }
 
         function renderDashboardView(container, filter) {
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
             const totalSiswa = siswaKelas.length;
             const todayStr = new Date().toISOString().split('T')[0];
-            const absensiHariIni = db.absensi.filter(a => a.tanggal === todayStr && (a.kelas === filter.kelas || !filter.kelas));
+            const absensiHariIni = db.absensi.filter(a => a.tanggal === todayStr && (a.kelas === filter.kelas || !filter.kelas) && (a.ta === filter.ta || !filter.ta));
             const hadirCount = absensiHariIni.filter(a => a.status === 'Hadir').length;
             const persenHadir = totalSiswa > 0 ? Math.round((hadirCount / totalSiswa) * 100) : 0;
             const tugasAktif = db.tugas.filter(t => t.status === 'Aktif').length;
@@ -1640,7 +1640,7 @@
         }
 
         function renderAbsensiView(container, filter) {
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
 
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
@@ -1709,8 +1709,8 @@
             const container = document.getElementById('moduleContentContainer');
             const filter = getActiveGlobalFilter();
             const isSiswa = currentUser && currentUser.role === 'Siswa';
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
-            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas));
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
+            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas) && (!filter.ta || a.ta === filter.ta));
             const uniqueDates = [...new Set(records.map(a => a.tanggal))].sort();
 
             container.innerHTML = `
@@ -1899,7 +1899,7 @@
 
         function copyAbsensiHarianText() {
             const filter = getActiveGlobalFilter();
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
             if (siswaKelas.length === 0) return notifyError('Tidak ada data siswa untuk disalin.');
 
             let textToCopy = `*REKAP PRESENSI HARIAN*\nSekolah: ${db.pengaturan.sekolah}\nMapel: ${filter.mapel || 'Semua Mapel'}\nKelas: ${filter.kelas || 'Semua Kelas'}\nTanggal: ${selectedAbsensiDate}\n\n*Daftar Siswa:*\n`;
@@ -1915,8 +1915,8 @@
 
         function exportRekapAbsensiExcel() {
             const filter = getActiveGlobalFilter();
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
-            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas));
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
+            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas) && (!filter.ta || a.ta === filter.ta));
             const uniqueDates = [...new Set(records.map(a => a.tanggal))].sort();
 
             const data = siswaKelas.map((s, idx) => {
@@ -1942,8 +1942,8 @@
 
         function previewRekapAbsensiPdf() {
             const filter = getActiveGlobalFilter();
-            const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
-            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas));
+            const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
+            const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas) && (!filter.ta || a.ta === filter.ta));
             const uniqueDates = [...new Set(records.map(a => a.tanggal))].sort();
 
             let theadHtml = '<th class="border p-1 text-center">No</th><th class="border p-1 text-left">Nama Siswa</th>';
@@ -1990,7 +1990,7 @@
 
         function renderNilaiView(container, filter) {
             const isSiswa = currentUser && currentUser.role === 'Siswa';
-            let siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
+            let siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
             if (isSiswa) siswaKelas = db.siswa.filter(s => s.id === currentUser.id);
             
             const mapelTarget = filter.mapel || 'Semua Mapel';
@@ -2069,9 +2069,9 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    ${siswaKelas.length === 0 ? `<tr><td colspan="${kolom.tugas.length + kolom.uh.length + kolom.uts.length + kolom.uas.length + 2}" class="p-6 text-center text-slate-400">Tidak ada siswa untuk kelas ini</td></tr>` :
+                                    ${siswaKelas.length === 0 ? `<tr><td colspan="${kolom.tugas.length + kolom.uh.length + kolom.uts.length + kolom.uas.length + 2}" class="p-6 text-center text-slate-400">Tidak ada siswa untuk kelas ini pada Tahun Ajaran tersebut</td></tr>` :
                                     siswaKelas.map(s => {
-                                        const rec = db.nilai.find(n => n.siswaId === s.id && n.mapel === mapelTarget) || { tugas: [], uh: [], uts: [], uas: [] };
+                                        const rec = db.nilai.find(n => n.siswaId === s.id && n.mapel === mapelTarget && n.ta === filter.ta) || { tugas: [], uh: [], uts: [], uas: [] };
                                         const rUts = Array.isArray(rec.uts) ? rec.uts : (rec.uts !== undefined ? [rec.uts] : []);
                                         const rUas = Array.isArray(rec.uas) ? rec.uas : (rec.uas !== undefined ? [rec.uas] : []);
                                         
@@ -2108,7 +2108,7 @@
 
         function updateScore(siswaId, field, idx, val) {
             const filter = getActiveGlobalFilter(); const mapelTarget = filter.mapel || 'Semua Mapel';
-            let rec = db.nilai.find(n => n.siswaId === siswaId && n.mapel === mapelTarget);
+            let rec = db.nilai.find(n => n.siswaId === siswaId && n.mapel === mapelTarget && n.ta === filter.ta);
             if (!rec) {
                 const kolom = getKolomNilai(mapelTarget);
                 rec = { id: 'N' + Date.now(), siswaId, mapel: mapelTarget, kelas: filter.kelas, ta: filter.ta, tugas: Array(kolom.tugas.length).fill(0), uh: Array(kolom.uh.length).fill(0), uts: Array(kolom.uts.length).fill(0), uas: Array(kolom.uas.length).fill(0) };
@@ -2158,10 +2158,10 @@
         }
 
         function exportNilaiExcel() {
-            const filter = getActiveGlobalFilter(); const siswaKelas = db.siswa.filter(s => s.kelas === filter.kelas || !filter.kelas);
+            const filter = getActiveGlobalFilter(); const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
             const mapelTarget = filter.mapel || 'Semua Mapel'; const kolom = getKolomNilai(mapelTarget);
             const data = siswaKelas.map((s, idx) => {
-                const rec = db.nilai.find(n => n.siswaId === s.id && n.mapel === mapelTarget) || { tugas: [], uh: [], uts: [], uas: [] };
+                const rec = db.nilai.find(n => n.siswaId === s.id && n.mapel === mapelTarget && n.ta === filter.ta) || { tugas: [], uh: [], uts: [], uas: [] };
                 const tugasScores = kolom.tugas.map((_, i) => rec.tugas[i] || 0); const uhScores = kolom.uh.map((_, i) => rec.uh[i] || 0);
                 const utsScores = kolom.uts.map((_, i) => (Array.isArray(rec.uts) ? rec.uts : [rec.uts || 0])[i] || 0);
                 const uasScores = kolom.uas.map((_, i) => (Array.isArray(rec.uas) ? rec.uas : [rec.uas || 0])[i] || 0);
@@ -2877,8 +2877,8 @@
         }
 
         function renderRaporView(container, filter) { 
-            const uniqueClasses = [...new Set(db.siswa.map(s => s.kelas))].filter(Boolean).sort();
-            const siswaKelas = db.siswa.filter(s => (!activeRaporKelasFilter || s.kelas === activeRaporKelasFilter));
+            const uniqueClasses = [...new Set(db.siswa.filter(s => s.ta === filter.ta).map(s => s.kelas))].filter(Boolean).sort();
+            const siswaKelas = db.siswa.filter(s => (!activeRaporKelasFilter || s.kelas === activeRaporKelasFilter) && s.ta === filter.ta);
             
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
