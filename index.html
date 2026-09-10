@@ -1843,15 +1843,52 @@
             if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
             const config = { fps: 10, qrbox: function (viewfinderWidth, viewfinderHeight) { let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight); let qrboxSize = Math.floor(minEdgeSize * 0.6); return { width: qrboxSize, height: qrboxSize }; } };
 
+            let lastScannedText = null;
+
             const onScanSuccess = (decodedText) => {
                 const cleanScannedText = String(decodedText).trim().toLowerCase();
+                
+                // 1. Mencegah scan QR yang sama berulang-ulang secara cepat
+                if (lastScannedText === cleanScannedText) return;
+                lastScannedText = cleanScannedText;
+                setTimeout(() => { lastScannedText = null; }, 2000); // Reset setelah 2 detik
+
                 const siswa = db.siswa.find(s => String(s.nisn).trim().toLowerCase() === cleanScannedText);
+                
                 if (siswa) {
-                    playBeepSound(); setAbsenStatus(siswa.id, 'Hadir'); notifySuccess('HADIR: ' + siswa.nama); stopQrScanner();
+                    playBeepSound(); 
+                    setAbsenStatus(siswa.id, 'Hadir'); 
+                    
+                    // 2. Gunakan notifikasi tipe "Toast" di pojok agar kamera tidak tertutup pop-up besar
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'HADIR: ' + siswa.nama,
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+
+                    // 3. Update teks status kamera secara langsung
+                    statusEl.textContent = 'Berhasil: ' + siswa.nama;
+                    statusEl.classList.remove('text-slate-500', 'text-rose-500');
+                    statusEl.classList.add('text-emerald-600', 'font-bold');
+                    
+                    setTimeout(() => { 
+                        statusEl.textContent = "Arahkan kamera ke QR Code NISN Kartu Siswa"; 
+                        statusEl.classList.remove('text-emerald-600', 'font-bold');
+                        statusEl.classList.add('text-slate-500');
+                    }, 2000);
+                    
+                    // stopQrScanner(); <--- PERINTAH INI SUDAH DIHAPUS
+                    
                 } else {
                     statusEl.textContent = "QR Code tidak terdaftar: " + cleanScannedText;
                     statusEl.classList.add('text-rose-500');
-                    setTimeout(() => { statusEl.textContent = "Arahkan kamera ke QR Code NISN Kartu Siswa"; statusEl.classList.remove('text-rose-500'); }, 2000);
+                    setTimeout(() => { 
+                        statusEl.textContent = "Arahkan kamera ke QR Code NISN Kartu Siswa"; 
+                        statusEl.classList.remove('text-rose-500'); 
+                    }, 2000);
                 }
             };
 
