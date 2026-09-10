@@ -3508,6 +3508,13 @@
             renderAdminUserCards();
         }
 
+        function editUser(id) {
+            const item = db.users.find(u => u.id === id);
+            if (item) {
+                openModalUser(item);
+            }
+        }
+
         function deleteUser(id) {
             Swal.fire({
                 title: 'Hapus Pengguna?',
