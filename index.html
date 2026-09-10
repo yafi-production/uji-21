@@ -2177,10 +2177,11 @@
 
         // --- UPDATE JURNAL MENGAJAR ---
         function renderJurnalView(container, filter) {
-            const list = db.jurnal;
+            const list = db.jurnal.filter(j => (!filter.mapel || j.mapel === filter.mapel) && (!filter.kelas || j.kelas === filter.kelas) && (!filter.ta || j.ta === filter.ta));
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    ${getLocalFilterHTML()}
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">Jurnal Mengajar Harian Guru</h2>
                             <p class="text-xs text-slate-400">Daftar seluruh catatan materi KBM</p>
@@ -2310,10 +2311,11 @@
 
         function renderTugasView(container, filter) {
             const isSiswa = currentUser && currentUser.role === 'Siswa';
-            const list = db.tugas.filter(t => t.mapel === filter.mapel || !filter.mapel);
+            const list = db.tugas.filter(t => (!filter.mapel || t.mapel === filter.mapel) && (!filter.kelas || t.kelas === filter.kelas) && (!filter.ta || t.ta === filter.ta));
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    ${getLocalFilterHTML()}
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">${isSiswa ? 'Daftar Tugas Siswa' : 'Pengelolaan Tugas Siswa'}</h2>
                             <p class="text-xs text-slate-400">Daftar penugasan aktif & tenggat waktu</p>
@@ -2404,10 +2406,11 @@
         // MODUL CATATAN KONSELING
         // ==========================================
         function renderCatatanView(container, filter) {
-            const list = db.catatan;
+            const list = db.catatan.filter(c => (!filter.kelas || c.kelas === filter.kelas) && (!filter.ta || c.ta === filter.ta));
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    ${getLocalFilterHTML()}
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">Catatan Konseling Siswa</h2>
                             <p class="text-xs text-slate-400">Rekam jejak bimbingan, pelanggaran, dan prestasi</p>
@@ -2504,10 +2507,10 @@
             if(!siswaRaw) return notifyError('Pilih siswa terlebih dahulu!');
             if(!kasus) return notifyError('Isi kasus/catatan terlebih dahulu!');
             
-            // Menggabungkan nama dan kelas agar detailnya terlihat pada daftar catatan
+            const filter = getActiveGlobalFilter();
             const siswaFinal = `${siswaRaw} (${kelas})`;
             
-            db.catatan.push({ id: 'C' + Date.now(), tanggal, siswa: siswaFinal, kasus, tindakLanjut }); 
+            db.catatan.push({ id: 'C' + Date.now(), tanggal, siswa: siswaFinal, kelas: kelas, ta: filter.ta, kasus, tindakLanjut }); 
             saveDb('catatan'); 
             closeModal(); 
             notifySuccess('Catatan tersimpan!'); 
@@ -2695,12 +2698,12 @@
 
         // ==========================================
         // MODUL REFLEKSI & MOTIVASI
-        // ==========================================
-        function renderRefleksiView(container) { 
-            const list = db.refleksi;
+        function renderRefleksiView(container, filter) { 
+            const list = db.refleksi.filter(r => (!filter.mapel || r.mapel === filter.mapel) && (!filter.kelas || r.kelas === filter.kelas) && (!filter.ta || r.ta === filter.ta));
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    ${getLocalFilterHTML()}
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
                         <div>
                             <h2 class="font-bold text-base text-slate-800">Catatan Refleksi & Motivasi</h2>
                             <p class="text-xs text-slate-400">Jurnal evaluasi diri guru dan penyemangat harian</p>
@@ -2779,13 +2782,15 @@
             if(!mapel) return notifyError('Harap pilih Mata Pelajaran!');
             if(!kelas) return notifyError('Harap pilih Kelas!');
             
+            const filter = getActiveGlobalFilter();
             db.refleksi.push({
                 id: 'R' + Date.now(), 
                 tanggal, 
                 judul, 
                 isi,
                 mapel: mapel.trim(),
-                kelas: kelas.trim()
+                kelas: kelas.trim(),
+                ta: filter.ta
             }); 
             saveDb('refleksi'); 
             closeModal(); 
@@ -2877,23 +2882,16 @@
         }
 
         function renderRaporView(container, filter) { 
-            const uniqueClasses = [...new Set(db.siswa.filter(s => s.ta === filter.ta).map(s => s.kelas))].filter(Boolean).sort();
-            const siswaKelas = db.siswa.filter(s => (!activeRaporKelasFilter || s.kelas === activeRaporKelasFilter) && s.ta === filter.ta);
+            const siswaKelas = db.siswa.filter(s => (!filter.kelas || s.kelas === filter.kelas) && (s.ta === filter.ta || !filter.ta));
             
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
+                    ${getLocalFilterHTML()}
                     
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4">
                         <div>
                             <h2 class="font-bold text-lg text-slate-800">Rekapitulasi & Cetak Lembar Rapor Siswa</h2>
                             <p class="text-xs text-slate-500 mt-1">Komposisi nilai akhir, absensi, dan catatan wali kelas</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-filter"></i> Filter Kelas:</span>
-                            <select onchange="updateRaporKelasFilter(this.value)" class="bg-slate-50 border border-slate-300 text-brand-700 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm">
-                                <option value="">-- Semua Kelas --</option>
-                                ${uniqueClasses.map(c => `<option value="${c}" ${activeRaporKelasFilter === c ? 'selected' : ''}>${c}</option>`).join('')}
-                            </select>
                         </div>
                     </div>
 
