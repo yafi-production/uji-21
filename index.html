@@ -540,7 +540,7 @@
             finalizeInit();
 
             // 2. Lakukan sinkronisasi data dari server di latar belakang (Background Sync)
-            if (GAS_API_URL !== '') {
+            if (GAS_API_URL !== 'https://script.google.com/macros/s/AKfycbx9jLvMXSk3gbkAeZi9l8kBk0hWLt2OiVhIxjFty8N1QBuD0E4265rSO9cTACVaiRj9/exec') {
                 try {
                     const response = await fetch(GAS_API_URL);
                     const serverData = await response.json();
