@@ -459,11 +459,7 @@
             { id: 'S201', nisn: '0012345690', nama: 'Eko Rahardjo', kelas: 'XI-IPA', ta: '2024/2025', jk: 'L', ortu: '081234567894' }
         ];
 
-        const INITIAL_USERS = [
-            { id: 'U1', nama: 'Budi Santoso, S.Pd.', email: 'admin@sekolah.id', password: '123456', role: 'Admin Sistem', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' },
-            { id: 'U2', nama: 'Siti Aminah, M.Pd.', email: 'siti.aminah@guru.smp.belajar.id', password: '123456', role: 'Guru Mapel', lastLogin: '2026-07-30', status: 'Aktif' },
-            { id: 'U3', nama: 'Ahmad Rizky Pratama', email: 'ahmad.rizky@siswa.smp.belajar.id', password: '123456', role: 'Siswa', kelas: 'X-A', lastLogin: new Date().toISOString().split('T')[0], status: 'Aktif' }
-        ];
+        const INITIAL_USERS = [];
 
         let db = {
             pengaturan: DEFAULT_SETTINGS,
