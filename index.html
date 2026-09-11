@@ -953,7 +953,7 @@
             return { ta: activeTA, mapel: mapelNama || '', kelas: kelasNama || '' };
         }
 
-        function getLocalFilterHTML() {
+        function getLocalFilterHTML(actionButtonHtml = '') {
             const isSiswa = currentUser && currentUser.role === 'Siswa';
             const availableMapel = isSiswa ? db.mapel.filter(m => m.kelas === currentUser.kelas) : db.mapel;
 
@@ -972,7 +972,7 @@
             let taOptions = uniqueTAs.map(ta => `<option value="${ta}" ${activeTA === ta ? 'selected' : ''}>${ta}</option>`).join('');
 
             return `
-                <div class="flex flex-nowrap items-center gap-1.5 sm:gap-2.5 bg-slate-50 p-1.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm mb-2 overflow-x-auto w-full">
+                <div class="flex flex-wrap md:flex-nowrap items-center gap-1.5 sm:gap-2.5 bg-slate-50 p-1.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm mb-2 w-full overflow-visible">
                     <span class="font-bold text-slate-600 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 uppercase tracking-wider shrink-0">
                         <i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filter Aktif:</span>
                     </span>
@@ -988,6 +988,7 @@
                             ${mapelOptions}
                         </select>
                     </div>
+                    ${actionButtonHtml}
                 </div>
             `;
         }
@@ -1646,10 +1647,14 @@
 
         function renderAbsensiView(container, filter) {
             const siswaKelas = db.siswa.filter(s => (s.kelas === filter.kelas || !filter.kelas) && (s.ta === filter.ta || !filter.ta));
+            const saveBtnHtml = `
+                <button onclick="saveAbsensiManual()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Simpan Data</span></button>
+                <button onclick="copyAbsensiHarianText()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5 shrink-0"><i class="fa-regular fa-copy"></i> <span class="hidden sm:inline">Salin Teks</span></button>
+            `;
 
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    ${getLocalFilterHTML()}
+                    ${getLocalFilterHTML(saveBtnHtml)}
                     <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
                         <div class="space-y-1">
                             <h2 class="font-bold text-base text-slate-800">Absensi Kehadiran Siswa (Harian)</h2>
@@ -1662,9 +1667,7 @@
                                 <input type="date" id="absensiDatePicker" value="${selectedAbsensiDate}" onchange="changeAbsensiDate(this.value)" class="bg-transparent font-mono outline-none cursor-pointer">
                             </div>
                             <button onclick="startQrScanner()" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-qrcode"></i> Scan QR Kamera</button>
-                            <button onclick="saveAbsensiManual()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Simpan Data</button>
                             <button onclick="renderRekapDetailAbsensiView()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-table-cells"></i> Rekap Per Pertemuan</button>
-                            <button onclick="copyAbsensiHarianText()" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-regular fa-copy"></i> Salin Teks</button>
                         </div>
                     </div>
 
@@ -1718,29 +1721,32 @@
             const records = db.absensi.filter(a => (!filter.mapel || a.mapel === filter.mapel) && (!filter.kelas || a.kelas === filter.kelas) && (!filter.ta || a.ta === filter.ta));
             const uniqueDates = [...new Set(records.map(a => a.tanggal))].sort();
 
+            let actionBtnHtml = '';
+            if (isSiswa) {
+                actionBtnHtml = `<button onclick="previewRekapAbsensiPdf()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 hover:bg-brand-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-file-pdf"></i> <span class="hidden sm:inline">Preview PDF</span></button>`;
+            } else {
+                actionBtnHtml = `
+                    <div class="relative group shrink-0 z-50">
+                        <button class="px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 hover:bg-brand-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Export Data</span> <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i></button>
+                        <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right flex flex-col">
+                            <button onclick="exportRekapAbsensiExcel()" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-excel text-emerald-600 w-4 text-center"></i> Export Excel</button>
+                            <button onclick="previewRekapAbsensiPdf()" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-pdf text-rose-600 w-4 text-center"></i> Preview PDF</button>
+                            <button onclick="exportRekapAbsensiJpg()" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition"><i class="fa-solid fa-image text-blue-600 w-4 text-center"></i> Export JPG</button>
+                        </div>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    ${getLocalFilterHTML()}
-                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-4">
+                    <div class="w-full">${getLocalFilterHTML(actionBtnHtml)}</div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-1">
                         <div class="space-y-1">
                             <h2 class="font-bold text-base text-slate-800">Rekap Detail Absensi Per Pertemuan</h2>
                             <p class="text-xs text-slate-400">Kelas: <span class="font-bold text-brand-600">${filter.mapel || 'Semua Mapel'} (${filter.kelas || 'Semua Kelas'})</span></p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             ${!isSiswa ? `<button onclick="renderModuleContent('absensi')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-arrow-left"></i> Kembali</button>` : ''}
-                            
-                            ${isSiswa ? `
-                            <button onclick="previewRekapAbsensiPdf()" class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> Preview PDF</button>
-                            ` : `
-                            <div class="relative group z-30">
-                                <button class="px-3 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Export Data <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i></button>
-                                <div class="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right transform scale-95 group-hover:scale-100 flex flex-col z-50">
-                                    <button onclick="exportRekapAbsensiExcel()" class="text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-excel text-emerald-600 w-4 text-center"></i> Export Excel</button>
-                                    <button onclick="previewRekapAbsensiPdf()" class="text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-pdf text-rose-600 w-4 text-center"></i> Preview PDF</button>
-                                    <button onclick="exportRekapAbsensiJpg()" class="text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition"><i class="fa-solid fa-image text-blue-600 w-4 text-center"></i> Export JPG</button>
-                                </div>
-                            </div>
-                            `}
                         </div>
                     </div>
 
@@ -2000,26 +2006,26 @@
             
             const mapelTarget = filter.mapel || 'Semua Mapel';
             const kolom = getKolomNilai(mapelTarget);
+            
+            let saveBtnHtml = '';
+            if (isSiswa) {
+                saveBtnHtml = `<button onclick="previewNilaiPdf()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 hover:bg-brand-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-file-pdf"></i> <span class="hidden sm:inline">Preview PDF</span></button>`;
+            } else {
+                saveBtnHtml = `
+                    <button onclick="saveNilaiManual()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Simpan Data</span></button>
+                    <div class="relative group shrink-0 z-50">
+                        <button class="px-3 py-1.5 sm:px-4 sm:py-2 bg-brand-600 hover:bg-brand-700 text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition shadow flex items-center gap-1.5"><i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Export Data</span> <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i></button>
+                        <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+                            <button onclick="exportNilaiExcel()" class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2 transition"><i class="fa-solid fa-file-excel text-emerald-600 w-4 text-center"></i> Export Excel</button>
+                            <button onclick="previewNilaiPdf()" class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition"><i class="fa-solid fa-file-pdf text-rose-600 w-4 text-center"></i> Preview PDF</button>
+                        </div>
+                    </div>
+                `;
+            }
 
             container.innerHTML = `
                 <div class="space-y-4 animate-fade-in">
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                        <div class="flex-1 w-full md:w-auto">${getLocalFilterHTML()}</div>
-                        ${isSiswa ? `
-                        <button onclick="previewNilaiPdf()" class="w-full md:w-auto px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-2 h-[42px]"><i class="fa-solid fa-file-pdf"></i> Preview PDF</button>
-                        ` : `
-                        <div class="flex flex-col md:flex-row gap-2 z-30 w-full md:w-auto">
-                            <button onclick="saveNilaiManual()" class="w-full md:w-auto px-4 py-2.5 md:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-2 h-full md:h-[42px]"><i class="fa-solid fa-floppy-disk"></i> Simpan Data</button>
-                            <div class="relative group w-full md:w-auto">
-                                <button class="w-full md:w-auto px-4 py-2.5 md:py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition shadow flex items-center justify-center gap-2 h-full md:h-[42px]"><i class="fa-solid fa-download"></i> Export Data <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i></button>
-                                <div class="absolute right-0 mt-2 w-full md:w-44 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right transform scale-95 group-hover:scale-100 flex flex-col z-50">
-                                    <button onclick="exportNilaiExcel()" class="text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-excel text-emerald-600 w-4 text-center"></i> Export Excel</button>
-                                    <button onclick="previewNilaiPdf()" class="text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 border-b flex items-center gap-2.5 transition"><i class="fa-solid fa-file-pdf text-rose-600 w-4 text-center"></i> Preview PDF</button>
-                                </div>
-                            </div>
-                        </div>
-                        `}
-                    </div>
+                    <div class="w-full">${getLocalFilterHTML(saveBtnHtml)}</div>
 
                     <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mt-1">
                         <div>
